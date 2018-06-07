@@ -13,8 +13,6 @@ namespace FileSearchAndAdd
     {
         private List<string> _foldersWithFile;
         private List<string> _foldersWithoutFile;
-        private string _fileName = "";
-
         public Form1()
         {
             InitializeComponent();
@@ -119,10 +117,10 @@ namespace FileSearchAndAdd
         {
             DialogResult dialogResult = openFileDialog1.ShowDialog();
             if (dialogResult == DialogResult.OK)
+            foreach (var listBox2SelectedItem in listBox2.SelectedItems)
             {
-                _fileName = openFileDialog1.FileName;
-               // textBox1.Text = _fileName;
-                MessageBox.Show(_fileName);
+                string fileName = Path.GetFileName(textBox2.Text);
+                File.Copy(textBox2.Text,string.Format("{0}//{1}",listBox2SelectedItem.ToString(), fileName));
             }
         }
 
