@@ -1,7 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace FileSearchAndAdd
@@ -10,15 +15,13 @@ namespace FileSearchAndAdd
     {
         private List<string> _foldersWithFile;
         private List<string> _foldersWithoutFile;
-        private string _fileName = "";
-
         public Form1()
         {
             InitializeComponent();
             _foldersWithFile = new List<string>();
             _foldersWithoutFile = new List<string>();
-            textBox1.Text = @"C:\BNCS\BBC_CS\panels";
-            textBox2.Text = @"C:\BNCS\BBC_CS\.gitignore";
+            textBox1.Text = @"";
+            textBox2.Text = @"";
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -67,27 +70,10 @@ namespace FileSearchAndAdd
 
         private void button2_Click(object sender, EventArgs e)
         {
-            DialogResult result = MessageBox.Show("Are you sure?", "Add file to folders selected",  MessageBoxButtons.YesNo,
-                MessageBoxIcon.Warning);
-
-            if (result == DialogResult.Yes)
+            foreach (var listBox2SelectedItem in listBox2.SelectedItems)
             {
-                foreach (var listBox2SelectedItem in listBox2.SelectedItems)
-                {
-                    string fileName = Path.GetFileName(textBox2.Text);
-                    File.Copy(textBox2.Text, string.Format("{0}//{1}", listBox2SelectedItem.ToString(), fileName));
-                } 
-            }
-        }
-
-        private void textBox1_DoubleClick(object sender, EventArgs e)
-        {
-            DialogResult dialogResult = openFileDialog1.ShowDialog();
-            if (dialogResult == DialogResult.OK)
-            {
-                _fileName = openFileDialog1.FileName;
-               // textBox1.Text = _fileName;
-                MessageBox.Show(_fileName);
+                string fileName = Path.GetFileName(textBox2.Text);
+                File.Copy(textBox2.Text,string.Format("{0}//{1}",listBox2SelectedItem.ToString(), fileName));
             }
         }
     }
