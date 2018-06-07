@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using LibGit2Sharp;
 
 namespace FileSearchAndAdd
 {
@@ -24,10 +22,10 @@ namespace FileSearchAndAdd
             textBox2.Text = @"";
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private async void button1_Click(object sender, EventArgs e)
         {
-            listBox1.Items.Clear();
-            listBox2.Items.Clear();
+            listView1.Items.Clear();
+            listView2.Items.Clear();
             _foldersWithFile.Clear();
             _foldersWithoutFile.Clear();
 
@@ -60,21 +58,75 @@ namespace FileSearchAndAdd
                 totalFoldersSearched++;
             }
 
+            List<ListViewItem> withItems = new List<ListViewItem>();
+            List<ListViewItem> withoutItems = new List<ListViewItem>();
+            _foldersWithFile.ForEach(i => withItems.Add(new ListViewItem(i)));
+            _foldersWithoutFile.ForEach(i => withoutItems.Add(new ListViewItem(i)));
+            listView1.Items.AddRange(withItems.ToArray());
+            listView2.Items.AddRange(withoutItems.ToArray());
+
+
+            label4.Text = string.Format("Change Detected : [{0}]", CheckAndUpdateGitStatus());
+            
+            
             label2.Text = string.Format("With File: [{0}]", _foldersWithFile.Count);
             label3.Text = string.Format("Without File: [{0}]", _foldersWithoutFile.Count);
-            listBox1.Items.AddRange(_foldersWithFile.ToArray());
-            listBox2.Items.AddRange(_foldersWithoutFile.ToArray());
-
+            
             label1.Text = string.Format("Number of .git files [{0}], with .gitignore files [Contains [{1}] vs Doesn't [{2}]] in [{3}] folders", countOfGitignoreFiles,hasgitIgnoreFile,doesntgitIgnoreFile,totalFoldersSearched);
+        }
+
+        private int CheckAndUpdateGitStatus()
+        {
+            int changesDetected = 0;
+            for (int x = 0; x < listView1.Items.Count; x++)
+            {
+                string enumerateFile = listView1.Items[x].Text;
+
+                using (var repo = new Repository(enumerateFile))
+                {
+                    int count = repo.RetrieveStatus(new LibGit2Sharp.StatusOptions() {IncludeIgnored = false})
+                        .Count();
+                    if (count > 0)
+                    {
+                        var x1 = x;
+                        listView1.BeginInvoke(new Action(() => { listView1.Items[x1].BackColor = Color.Red; }));
+                        changesDetected++;
+                    }
+                }
+            }
+
+            return changesDetected;
         }
 
         private void button2_Click(object sender, EventArgs e)
         {
+            DialogResult result = MessageBox.Show("Are you sure?", "Add file to folders selected",  MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
+
+            if (result == DialogResult.Yes)
+            {
+                foreach (var listBox2SelectedItem in listView2.SelectedItems)
+                {
+                    string fileName = Path.GetFileName(textBox2.Text);
+                    File.Copy(textBox2.Text, string.Format("{0}//{1}", listBox2SelectedItem.ToString(), fileName));
+                } 
+            }
+        }
+
+        private void textBox1_DoubleClick(object sender, EventArgs e)
+        {
+            DialogResult dialogResult = openFileDialog1.ShowDialog();
+            if (dialogResult == DialogResult.OK)
             foreach (var listBox2SelectedItem in listBox2.SelectedItems)
             {
                 string fileName = Path.GetFileName(textBox2.Text);
                 File.Copy(textBox2.Text,string.Format("{0}//{1}",listBox2SelectedItem.ToString(), fileName));
             }
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }
