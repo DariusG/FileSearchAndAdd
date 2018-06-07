@@ -63,6 +63,16 @@ namespace FileSearchAndAdd.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
         /// </summary>
+        internal static System.Drawing.Icon devil_git {
+            get {
+                object obj = ResourceManager.GetObject("devil_git", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
+        /// </summary>
         internal static System.Drawing.Icon git {
             get {
                 object obj = ResourceManager.GetObject("git", resourceCulture);
