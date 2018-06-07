@@ -17,8 +17,8 @@ namespace FileSearchAndAdd
             InitializeComponent();
             _foldersWithFile = new List<string>();
             _foldersWithoutFile = new List<string>();
-            textBox1.Text = @"C:\BNCS\BBC_CS\panels";
-            textBox2.Text = @"C:\BNCS\BBC_CS\.gitignore";
+            textBox1.Text = @"";
+            textBox2.Text = @"";
         }
 
         private void button1_Click(object sender, EventArgs e)
