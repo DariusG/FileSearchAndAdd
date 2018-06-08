@@ -1,6 +1,6 @@
 ﻿namespace FileSearchAndAdd
 {
-    partial class Form1
+    partial class MainGuiForm
     {
         /// <summary>
         /// Required designer variable.
@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainGuiForm));
             this.btnSearch = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
             this.tbFilenameToSearchFor = new System.Windows.Forms.TextBox();
@@ -42,7 +42,7 @@
             this.tbFilenameOfFileToAdd = new System.Windows.Forms.TextBox();
             this.btnAdd = new System.Windows.Forms.Button();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
-            this.button3 = new System.Windows.Forms.Button();
+            this.btnCheckRepos = new System.Windows.Forms.Button();
             this.lblGitFolderStatusChangeDetected = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
@@ -192,15 +192,15 @@
             this.openFileDialog1.Filter = "All Files|*.*";
             this.openFileDialog1.Title = "Select Git File";
             // 
-            // button3
+            // btnCheckRepos
             // 
-            this.button3.Location = new System.Drawing.Point(20, 127);
-            this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(143, 23);
-            this.button3.TabIndex = 10;
-            this.button3.Text = "Check Git Repo Status\'s";
-            this.button3.UseVisualStyleBackColor = true;
-            this.button3.Click += new System.EventHandler(this.button3_Click);
+            this.btnCheckRepos.Location = new System.Drawing.Point(20, 127);
+            this.btnCheckRepos.Name = "btnCheckRepos";
+            this.btnCheckRepos.Size = new System.Drawing.Size(143, 23);
+            this.btnCheckRepos.TabIndex = 10;
+            this.btnCheckRepos.Text = "Check Git Repo Status\'s";
+            this.btnCheckRepos.UseVisualStyleBackColor = true;
+            this.btnCheckRepos.Click += new System.EventHandler(this.btnCheckRepos_Click);
             // 
             // lblGitFolderStatusChangeDetected
             // 
@@ -212,14 +212,15 @@
             this.lblGitFolderStatusChangeDetected.Size = new System.Drawing.Size(97, 13);
             this.lblGitFolderStatusChangeDetected.TabIndex = 11;
             this.lblGitFolderStatusChangeDetected.Text = "Change Detected :";
+            this.lblGitFolderStatusChangeDetected.Visible = false;
             // 
-            // Form1
+            // MainGuiForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(486, 425);
             this.Controls.Add(this.lblGitFolderStatusChangeDetected);
-            this.Controls.Add(this.button3);
+            this.Controls.Add(this.btnCheckRepos);
             this.Controls.Add(this.tbFilenameOfFileToAdd);
             this.Controls.Add(this.btnAdd);
             this.Controls.Add(this.lblFoldersWithSearchedFile);
@@ -228,7 +229,8 @@
             this.Controls.Add(this.btnSearch);
             this.Controls.Add(this.splitContainer1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.Name = "Form1";
+            this.MinimumSize = new System.Drawing.Size(502, 464);
+            this.Name = "MainGuiForm";
             this.Text = "Git File Search and Adder";
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);
@@ -255,7 +257,7 @@
         private System.Windows.Forms.ListView lvFoldersWithoutSearchedFile;
         private System.Windows.Forms.ColumnHeader columnHeader1;
         private System.Windows.Forms.ColumnHeader columnHeader2;
-        private System.Windows.Forms.Button button3;
+        private System.Windows.Forms.Button btnCheckRepos;
         private System.Windows.Forms.Label lblGitFolderStatusChangeDetected;
     }
 }

@@ -3,26 +3,28 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using LibGit2Sharp;
 
 namespace FileSearchAndAdd
 {
-    public partial class Form1 : Form
+    public partial class MainGuiForm : Form
     {
         private List<string> _foldersWithFile;
         private List<string> _foldersWithoutFile;
-        public Form1()
+        public MainGuiForm()
         {
             InitializeComponent();
             _foldersWithFile = new List<string>();
             _foldersWithoutFile = new List<string>();
-            tbFilenameToSearchFor.Text = @"";
-            tbFilenameOfFileToAdd.Text = @"";
+            tbFilenameToSearchFor.Text = @"C:\BNCS\BBC_CS\panels\";
+            tbFilenameOfFileToAdd.Text = @"C:\BNCS\BBC_CS\panels\.gitignore";
         }
 
         private void btnSearch_Click(object sender, EventArgs e)
         {
+            Cursor.Current = Cursors.WaitCursor;
             UpdateGui();
         }
 
@@ -30,43 +32,90 @@ namespace FileSearchAndAdd
         {
             try
             {
-                lvFoldersWithSearchedFile.Items.Clear();
-                lvFoldersWithoutSearchedFile.Items.Clear();
-                _foldersWithFile.Clear();
-                _foldersWithoutFile.Clear();
-
-                int countOfGitignoreFiles = 0;
-                int hasgitIgnoreFile = 0;
-                int doesntgitIgnoreFile = 0;
-                int totalFoldersSearched = 0;
-
-                countOfGitignoreFiles = SearchForFiles(countOfGitignoreFiles, ref doesntgitIgnoreFile, ref hasgitIgnoreFile,
-                    ref totalFoldersSearched);
-
-                List<ListViewItem> withItems = new List<ListViewItem>();
-                List<ListViewItem> withoutItems = new List<ListViewItem>();
-                _foldersWithFile.ForEach(i => withItems.Add(new ListViewItem(i)));
-                _foldersWithoutFile.ForEach(i => withoutItems.Add(new ListViewItem(i)));
-                lvFoldersWithSearchedFile.Items.AddRange(withItems.ToArray());
-                lvFoldersWithoutSearchedFile.Items.AddRange(withoutItems.ToArray());
-
-                if (includeGitCheck)
+                Task updateGuiOperation = Task.Factory.StartNew(() =>
                 {
-                    lblGitFolderStatusChangeDetected.Visible = true;
-                    lblGitFolderStatusChangeDetected.Text = string.Format("Change Detected : [{0}]", CheckAndUpdateGitStatus());
-                }
-                else
+                    lvFoldersWithSearchedFile.BeginInvoke(new Action(() =>
+                    {
+                        lvFoldersWithSearchedFile.Items.Clear();
+                    }));
+                    lvFoldersWithSearchedFile.BeginInvoke(new Action(() =>
+                    {
+                        lvFoldersWithoutSearchedFile.Items.Clear();
+                    }));
+                    _foldersWithFile.Clear();
+                    _foldersWithoutFile.Clear();
+
+                    int countOfGitignoreFiles = 0;
+                    int hasgitIgnoreFile = 0;
+                    int doesntgitIgnoreFile = 0;
+                    int totalFoldersSearched = 0;
+
+                    countOfGitignoreFiles = SearchForFiles(countOfGitignoreFiles, ref doesntgitIgnoreFile,
+                        ref hasgitIgnoreFile,
+                        ref totalFoldersSearched);
+
+                    List<ListViewItem> withItems = new List<ListViewItem>();
+                    List<ListViewItem> withoutItems = new List<ListViewItem>();
+                    _foldersWithFile.ForEach(i => withItems.Add(new ListViewItem(i)));
+                    _foldersWithoutFile.ForEach(i => withoutItems.Add(new ListViewItem(i)));
+                    lvFoldersWithSearchedFile.BeginInvoke(new Action(()=>
+                    {
+                        lvFoldersWithSearchedFile.Items.AddRange(withItems.ToArray());
+                    }));
+                    lvFoldersWithoutSearchedFile.BeginInvoke(new Action(() =>
+                    {
+                        lvFoldersWithoutSearchedFile.Items.AddRange(withoutItems.ToArray());
+                    }));
+
+                    if (includeGitCheck)
+                    {
+                        lvFoldersWithSearchedFile.BeginInvoke(new Action(() =>
+                        {
+                            lblGitFolderStatusChangeDetected.Visible = true;
+                        }));
+                        lvFoldersWithSearchedFile.BeginInvoke(new Action(() =>
+                        {
+                            lblGitFolderStatusChangeDetected.Text =
+                            string.Format("Change Detected : [{0}]", CheckAndUpdateGitStatus());
+                        }));
+                    }
+                    else
+                    {
+                        lvFoldersWithoutSearchedFile.BeginInvoke(new Action(() =>
+                        {
+                            lblGitFolderStatusChangeDetected.Visible = false;
+                        }));
+                    }
+
+                    lvFoldersWithoutSearchedFile.BeginInvoke(new Action(() =>
+                    {
+                        lblFoldersWithSearchedFile.Text = string.Format("With File: [{0}]", _foldersWithFile.Count);
+                    }));
+                    lvFoldersWithoutSearchedFile.BeginInvoke(new Action(() =>
+                    {
+                        lblFoldersWithoutSearchedFile.Text =
+                        string.Format("Without File: [{0}]", _foldersWithoutFile.Count);
+                    }));
+                    lvFoldersWithoutSearchedFile.BeginInvoke(new Action(() =>
+                    {
+                            label1.Text =
+                        string.Format(
+                            "Number of .git files [{0}], with .gitignore files [Contains [{1}] vs Doesn't [{2}]] in [{3}] folders",
+                            countOfGitignoreFiles, hasgitIgnoreFile, doesntgitIgnoreFile, totalFoldersSearched);
+                    }));
+                });
+                updateGuiOperation.ContinueWith((fb) =>
                 {
-                    lblGitFolderStatusChangeDetected.Visible = false;
-                }
-
-                lblFoldersWithSearchedFile.Text = string.Format("With File: [{0}]", _foldersWithFile.Count);
-                lblFoldersWithoutSearchedFile.Text = string.Format("Without File: [{0}]", _foldersWithoutFile.Count);
-
-                label1.Text =
-                    string.Format(
-                        "Number of .git files [{0}], with .gitignore files [Contains [{1}] vs Doesn't [{2}]] in [{3}] folders",
-                        countOfGitignoreFiles, hasgitIgnoreFile, doesntgitIgnoreFile, totalFoldersSearched);
+                    if (fb.IsFaulted)
+                    {
+                        MessageBox.Show("Faulted");
+                    }
+                    else
+                    {
+                        Cursor.Current = Cursors.Default;
+                    }
+                    
+                });
             }
             catch (Exception)
             {
@@ -166,15 +215,14 @@ namespace FileSearchAndAdd
         {
             DialogResult dialogResult = openFileDialog1.ShowDialog();
             if (dialogResult == DialogResult.OK)
-            foreach (var listBox2SelectedItem in listBox2.SelectedItems)
             {
-                string fileName = Path.GetFileName(textBox2.Text);
-                File.Copy(textBox2.Text,string.Format("{0}//{1}",listBox2SelectedItem.ToString(), fileName));
+                tbFilenameToSearchFor.Text = Path.GetDirectoryName(openFileDialog1.FileName);
             }
         }
 
-        private void button3_Click(object sender, EventArgs e)
+        private void btnCheckRepos_Click(object sender, EventArgs e)
         {
+            Cursor.Current = Cursors.WaitCursor;
             UpdateGui(true);
         }
     }
