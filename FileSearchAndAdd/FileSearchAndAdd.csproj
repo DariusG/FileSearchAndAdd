@@ -35,7 +35,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>Resources\devil_git.ico</ApplicationIcon>
+    <ApplicationIcon>Resources\git.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="LibGit2Sharp, Version=0.25.0.0, Culture=neutral, PublicKeyToken=7cbde695407f0333, processorArchitecture=MSIL">
@@ -91,9 +91,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\git.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\devil_git.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
