@@ -9,124 +9,221 @@ using LibGit2Sharp;
 
 namespace FileSearchAndAdd
 {
-    public partial class Form1 : Form
+    public partial class MainGuiForm : Form
     {
         private List<string> _foldersWithFile;
         private List<string> _foldersWithoutFile;
-        public Form1()
+        public MainGuiForm()
         {
             InitializeComponent();
             _foldersWithFile = new List<string>();
             _foldersWithoutFile = new List<string>();
-            textBox1.Text = @"";
-            textBox2.Text = @"";
+            tbFilenameToSearchFor.Text = @"C:\BNCS\BBC_CS\panels\";
+            tbFilenameOfFileToAdd.Text = @"C:\BNCS\BBC_CS\panels\.gitignore";
         }
 
-        private async void button1_Click(object sender, EventArgs e)
+        private void btnSearch_Click(object sender, EventArgs e)
         {
-            listView1.Items.Clear();
-            listView2.Items.Clear();
-            _foldersWithFile.Clear();
-            _foldersWithoutFile.Clear();
+            Cursor.Current = Cursors.WaitCursor;
+            UpdateGui();
+        }
 
-            int countOfGitignoreFiles = 0;
-            int hasgitIgnoreFile = 0;
-            int doesntgitIgnoreFile = 0;
-            int totalFoldersSearched = 0;
-
-            foreach (string enumerateFile in Directory.EnumerateFiles(textBox1.Text, ".git", SearchOption.AllDirectories))
+        private void UpdateGui(bool includeGitCheck = false)
+        {
+            try
             {
-                if (Path.GetExtension(enumerateFile).Equals(".git"))
+                Task updateGuiOperation = Task.Factory.StartNew(() =>
                 {
-                    string directoryName = Path.GetDirectoryName(enumerateFile);
-                    countOfGitignoreFiles++;
-                    //if (Directory.GetFiles(Path.GetDirectoryName(enumerateFile), "*.gitignore").Length == 0)
-                    if (directoryName != null && !Directory.EnumerateFiles(directoryName, "*.gitignore", SearchOption.TopDirectoryOnly).Any())
+                    lvFoldersWithSearchedFile.BeginInvoke(new Action(() =>
                     {
-                        //NO matching *.gitignore files
-                        doesntgitIgnoreFile++;
-                        _foldersWithoutFile.Add(directoryName);
+                        lvFoldersWithSearchedFile.Items.Clear();
+                    }));
+                    lvFoldersWithSearchedFile.BeginInvoke(new Action(() =>
+                    {
+                        lvFoldersWithoutSearchedFile.Items.Clear();
+                    }));
+                    _foldersWithFile.Clear();
+                    _foldersWithoutFile.Clear();
+
+                    int countOfGitignoreFiles = 0;
+                    int hasgitIgnoreFile = 0;
+                    int doesntgitIgnoreFile = 0;
+                    int totalFoldersSearched = 0;
+
+                    countOfGitignoreFiles = SearchForFiles(countOfGitignoreFiles, ref doesntgitIgnoreFile,
+                        ref hasgitIgnoreFile,
+                        ref totalFoldersSearched);
+
+                    List<ListViewItem> withItems = new List<ListViewItem>();
+                    List<ListViewItem> withoutItems = new List<ListViewItem>();
+                    _foldersWithFile.ForEach(i => withItems.Add(new ListViewItem(i)));
+                    _foldersWithoutFile.ForEach(i => withoutItems.Add(new ListViewItem(i)));
+                    lvFoldersWithSearchedFile.BeginInvoke(new Action(()=>
+                    {
+                        lvFoldersWithSearchedFile.Items.AddRange(withItems.ToArray());
+                    }));
+                    lvFoldersWithoutSearchedFile.BeginInvoke(new Action(() =>
+                    {
+                        lvFoldersWithoutSearchedFile.Items.AddRange(withoutItems.ToArray());
+                    }));
+
+                    if (includeGitCheck)
+                    {
+                        lvFoldersWithSearchedFile.BeginInvoke(new Action(() =>
+                        {
+                            lblGitFolderStatusChangeDetected.Visible = true;
+                        }));
+                        lvFoldersWithSearchedFile.BeginInvoke(new Action(() =>
+                        {
+                            lblGitFolderStatusChangeDetected.Text =
+                            string.Format("Change Detected : [{0}]", CheckAndUpdateGitStatus());
+                        }));
                     }
                     else
                     {
-                        //has matching *.gitignore files
-                        hasgitIgnoreFile++;
-                        _foldersWithFile.Add(directoryName);
+                        lvFoldersWithoutSearchedFile.BeginInvoke(new Action(() =>
+                        {
+                            lblGitFolderStatusChangeDetected.Visible = false;
+                        }));
                     }
-                }
 
-                totalFoldersSearched++;
+                    lvFoldersWithoutSearchedFile.BeginInvoke(new Action(() =>
+                    {
+                        lblFoldersWithSearchedFile.Text = string.Format("With File: [{0}]", _foldersWithFile.Count);
+                    }));
+                    lvFoldersWithoutSearchedFile.BeginInvoke(new Action(() =>
+                    {
+                        lblFoldersWithoutSearchedFile.Text =
+                        string.Format("Without File: [{0}]", _foldersWithoutFile.Count);
+                    }));
+                    lvFoldersWithoutSearchedFile.BeginInvoke(new Action(() =>
+                    {
+                            label1.Text =
+                        string.Format(
+                            "Number of .git files [{0}], with .gitignore files [Contains [{1}] vs Doesn't [{2}]] in [{3}] folders",
+                            countOfGitignoreFiles, hasgitIgnoreFile, doesntgitIgnoreFile, totalFoldersSearched);
+                    }));
+                });
+                updateGuiOperation.ContinueWith((fb) =>
+                {
+                    if (fb.IsFaulted)
+                    {
+                        MessageBox.Show("Faulted");
+                    }
+                    else
+                    {
+                        Cursor.Current = Cursors.Default;
+                    }
+                    
+                });
+            }
+            catch (Exception)
+            {
+                MessageBox.Show(@"Error Updating the Gui");
+            }
+        }
+
+        private int SearchForFiles(int countOfGitignoreFiles, ref int doesntgitIgnoreFile, ref int hasgitIgnoreFile,
+            ref int totalFoldersSearched)
+        {
+            try
+            {
+                foreach (string enumerateFile in Directory.EnumerateFiles(tbFilenameToSearchFor.Text, ".git",
+                        SearchOption.AllDirectories))
+                {
+                    if (enumerateFile != null && Path.GetExtension(enumerateFile).Equals(".git"))
+                    {
+                        string directoryName = Path.GetDirectoryName(enumerateFile);
+                        countOfGitignoreFiles++;
+                        if (directoryName != null &&
+                            !Directory.EnumerateFiles(directoryName, "*.gitignore", SearchOption.TopDirectoryOnly).Any())
+                        {
+                            //NO matching *.gitignore files
+                            doesntgitIgnoreFile++;
+                            _foldersWithoutFile.Add(directoryName);
+                        }
+                        else
+                        {
+                            //has matching *.gitignore files
+                            hasgitIgnoreFile++;
+                            _foldersWithFile.Add(directoryName);
+                        }
+                    }
+
+                    totalFoldersSearched++;
+                }
+            }
+            catch (Exception)
+            {
+                MessageBox.Show(@"Error Searching the folders for file");
             }
 
-            List<ListViewItem> withItems = new List<ListViewItem>();
-            List<ListViewItem> withoutItems = new List<ListViewItem>();
-            _foldersWithFile.ForEach(i => withItems.Add(new ListViewItem(i)));
-            _foldersWithoutFile.ForEach(i => withoutItems.Add(new ListViewItem(i)));
-            listView1.Items.AddRange(withItems.ToArray());
-            listView2.Items.AddRange(withoutItems.ToArray());
-
-
-            label4.Text = string.Format("Change Detected : [{0}]", CheckAndUpdateGitStatus());
-            
-            
-            label2.Text = string.Format("With File: [{0}]", _foldersWithFile.Count);
-            label3.Text = string.Format("Without File: [{0}]", _foldersWithoutFile.Count);
-            
-            label1.Text = string.Format("Number of .git files [{0}], with .gitignore files [Contains [{1}] vs Doesn't [{2}]] in [{3}] folders", countOfGitignoreFiles,hasgitIgnoreFile,doesntgitIgnoreFile,totalFoldersSearched);
+            return countOfGitignoreFiles;
         }
 
         private int CheckAndUpdateGitStatus()
         {
             int changesDetected = 0;
-            for (int x = 0; x < listView1.Items.Count; x++)
+            try
             {
-                string enumerateFile = listView1.Items[x].Text;
 
-                using (var repo = new Repository(enumerateFile))
+                for (int x = 0; x < lvFoldersWithSearchedFile.Items.Count; x++)
                 {
-                    int count = repo.RetrieveStatus(new LibGit2Sharp.StatusOptions() {IncludeIgnored = false})
-                        .Count();
-                    if (count > 0)
+                    string enumerateFile = lvFoldersWithSearchedFile.Items[x].Text;
+
+                    using (var repo = new Repository(enumerateFile))
                     {
-                        var x1 = x;
-                        listView1.BeginInvoke(new Action(() => { listView1.Items[x1].BackColor = Color.Red; }));
-                        changesDetected++;
+                        int count = repo.RetrieveStatus(new LibGit2Sharp.StatusOptions() {IncludeIgnored = false})
+                            .Count();
+                        if (count > 0)
+                        {
+                            var x1 = x;
+                            lvFoldersWithSearchedFile.BeginInvoke(new Action(() =>
+                            {
+                                lvFoldersWithSearchedFile.Items[x1].BackColor = Color.Red;
+                            }));
+                            changesDetected++;
+                        }
                     }
                 }
+            }
+            catch (Exception)
+            {
+                MessageBox.Show(@"Error Retrieving the Git Status for folders using LibGit2Sharp");
+                changesDetected = -1;
             }
 
             return changesDetected;
         }
 
-        private void button2_Click(object sender, EventArgs e)
+        private void btnAdd_Click(object sender, EventArgs e)
         {
-            DialogResult result = MessageBox.Show("Are you sure?", "Add file to folders selected",  MessageBoxButtons.YesNo,
+            DialogResult result = MessageBox.Show(@"Are you sure?", @"Add file to folders selected",  MessageBoxButtons.YesNo,
                 MessageBoxIcon.Warning);
 
             if (result == DialogResult.Yes)
             {
-                foreach (var listBox2SelectedItem in listView2.SelectedItems)
+                foreach (var listBox2SelectedItem in lvFoldersWithoutSearchedFile.SelectedItems)
                 {
-                    string fileName = Path.GetFileName(textBox2.Text);
-                    File.Copy(textBox2.Text, string.Format("{0}//{1}", listBox2SelectedItem.ToString(), fileName));
+                    string fileName = Path.GetFileName(tbFilenameOfFileToAdd.Text);
+                    File.Copy(tbFilenameOfFileToAdd.Text, string.Format("{0}//{1}", listBox2SelectedItem.ToString(), fileName));
                 } 
             }
         }
 
-        private void textBox1_DoubleClick(object sender, EventArgs e)
+        private void tbFilenameToSearchFor_DoubleClick(object sender, EventArgs e)
         {
             DialogResult dialogResult = openFileDialog1.ShowDialog();
             if (dialogResult == DialogResult.OK)
-            foreach (var listBox2SelectedItem in listBox2.SelectedItems)
             {
-                string fileName = Path.GetFileName(textBox2.Text);
-                File.Copy(textBox2.Text,string.Format("{0}//{1}",listBox2SelectedItem.ToString(), fileName));
+                tbFilenameToSearchFor.Text = Path.GetDirectoryName(openFileDialog1.FileName);
             }
         }
 
-        private void button3_Click(object sender, EventArgs e)
+        private void btnCheckRepos_Click(object sender, EventArgs e)
         {
-
+            Cursor.Current = Cursors.WaitCursor;
+            UpdateGui(true);
         }
     }
 }
